@@ -1,51 +1,57 @@
-import bill
+﻿from dataclasses import dataclass
+from typing import List
 
-def is_valid_product_name(product_name):
+try:
+    from . import bill
+except ImportError:
+    import bill
+
+
+@dataclass
+class Order:
+    product_name: str
+    number_of_purchases: int
+
+
+def is_valid_product_name(product_name: str) -> bool:
     return next((item for item in bill.items if item['name'] == product_name), None) is not None
 
-class Order:
-    def __init__(self, product_name, number_of_purchases):
-        self.product_name = product_name
-        self.number_of_purchases = number_of_purchases
 
-order_list = []
-
-while True:
+def read_positive_integer(prompt_text: str) -> int:
     while True:
-        product_name = input("商品名を入力してください")
+        raw_value = input(prompt_text).strip()
+        if raw_value.isdigit() and int(raw_value) > 0:
+            return int(raw_value)
+        print('正しい数値を入力してください。')
+
+
+def read_orders() -> List[Order]:
+    orders: List[Order] = []
+    while True:
+        product_name = input('商品名を入力してください: ').strip()
         if not is_valid_product_name(product_name):
-            print("正しい商品名を入力してください")
-        else:
-            order_list.append(Order(product_name, number_of_purchases))
+            print('正しい商品名を入力してください')
+            continue
+
+        number_of_purchases = read_positive_integer('購入数を入力してください: ')
+        orders.append(Order(product_name=product_name, number_of_purchases=number_of_purchases))
+
+        answer = input('注文を続けますか？ (y/n): ').strip().lower()
+        if answer == 'n':
+            break
+        if answer != 'y':
+            print('無効な入力です。注文を終了します。')
             break
 
-    while True:
-        number_of_purchases = input("購入数を入力してください")
-        if not number_of_purchases.isdigit() or int(number_of_purchases) <= 0:
-            print("正しい数値を入力してください")
-        else:
-            break
-
-    print("注文を続けますか？")
-    answer = input("y/n: ")
-    if answer == "y":
-        continue
-    elif answer == "n":
-        break
-    else:
-        print("正しい入力をしてください")
-
-print("注文内容:")
-
-for order in order_list:
-    print(f"商品名: {order.product_name}, 購入数: {order.number_of_purchases}")
-
-total_cost = sum(order.number_of_purchases for order in order_list)
-print(f"合計金額: {total_cost}")
+    return orders
 
 
-
-
+def calculate_total(orders: List[Order]) -> int:
+    total = 0
+    for order in orders:
+        item = next(item for item in bill.items if item['name'] == order.product_name)
+        total += item['price'] * order.number_of_purchases
+    return total
 
 
 if __name__ == '__main__':
